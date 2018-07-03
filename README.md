@@ -20,10 +20,10 @@ A simple class for making calls to Dash's RPC API using PHP.
 
 3. Make calls to dashd as methods for your object. Examples:
 
-	`$aither->getinfo();`
-	`$aither->getrawtransaction('0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098',1);`
-	`$aither->getblock('000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f');`
-	`$aither->mnbudget('show');`
+	`$aither->getinfo();`    
+	`$aither->getrawtransaction('0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098',1);`    
+	`$aither->getblock('000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f');`    
+	`$aither->mnbudget('show');`    
 
 ## Additional Info:
 * When a call fails for any reason, it will return false and put the error message in $aither->error
