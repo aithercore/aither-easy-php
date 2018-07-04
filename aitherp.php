@@ -67,22 +67,37 @@ echo $aither->status;
 */
 
 namespace aither;
-
+/**
+ * @see https://github.com/aithercore/aither-easy-php/blob/master/DOC.md
+ * @method array getinfo() Returns an object containing various state info.
+ * @method string help(string $command = "") Return all commands
+ * @method string sendtoaddress(string $address, double $amount, string $comment = "", string $comment_to = "", bool $subtractfeefromamount = false) Send an amount to a given address
+ */
 class Aitherp {
+
 	// Configuration options
 	private $username;
+
 	private $password;
+
 	private $proto;
+
 	private $host;
+
 	private $port;
+
 	private $url;
+
 	private $CACertificate;
 
 	// Information and debugging
-	public $status;
-	public $error;
-	public $raw_response;
-	public $response;
+	public  $status;
+
+	public  $error;
+
+	public  $raw_response;
+
+	public  $response;
 
 	private $id = 0;
 
@@ -90,17 +105,16 @@ class Aitherp {
 	 * @param string $username
 	 * @param string $password
 	 * @param string $host
-	 * @param int $port
+	 * @param int    $port
 	 * @param string $proto
 	 * @param string $url
 	 */
-	function __construct($username, $password, $host = 'localhost', $port = 40999, $url = null) {
-		$this->username      = $username;
-		$this->password      = $password;
-		$this->host          = $host;
-		$this->port          = $port;
-		$this->url           = $url;
-
+	public function __construct($username, $password, $host = 'localhost', $port = 40999, $url = null) {
+		$this->username = $username;
+		$this->password = $password;
+		$this->host     = $host;
+		$this->port     = $port;
+		$this->url      = $url;
 		// Set some defaults
 		$this->proto         = 'http';
 		$this->CACertificate = null;
@@ -109,78 +123,64 @@ class Aitherp {
 	/**
 	 * @param string|null $certificate
 	 */
-	function setSSL($certificate = null) {
+	public function setSSL($certificate = null) {
 		$this->proto         = 'https'; // force HTTPS
 		$this->CACertificate = $certificate;
 	}
 
-	function __call($method, $params) {
+	public function __call($method, $params) {
 		$this->status       = null;
 		$this->error        = null;
 		$this->raw_response = null;
 		$this->response     = null;
-
 		// If no parameters are passed, this will be an empty array
 		$params = array_values($params);
-
 		// The ID should be unique for each call
-		$this->id++;
-
+		$this->id ++;
 		// Build the request, it's ok that params might have any empty array
 		$request = json_encode(array(
 			'method' => $method,
 			'params' => $params,
-			'id'     => $this->id
+			'id'     => $this->id,
 		));
-
 		// Build the cURL session
 		$curl    = curl_init("{$this->proto}://{$this->username}:{$this->password}@{$this->host}:{$this->port}/{$this->url}");
 		$options = array(
 			CURLOPT_CONNECTTIMEOUT => 30,
-			CURLOPT_RETURNTRANSFER => TRUE,
-			CURLOPT_FOLLOWLOCATION => TRUE,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_MAXREDIRS      => 10,
 			CURLOPT_HTTPHEADER     => array('Content-type: application/json'),
-			CURLOPT_POST           => TRUE,
+			CURLOPT_POST           => true,
 			CURLOPT_POSTFIELDS     => $request,
-			CURLOPT_TIMEOUT        => 60
+			CURLOPT_TIMEOUT        => 60,
 		);
-
 		if ($this->proto == 'https') {
 			// If the CA Certificate was specified we change CURL to look for it
 			if ($this->CACertificate != null) {
 				$options[CURLOPT_CAINFO] = $this->CACertificate;
 				$options[CURLOPT_CAPATH] = DIRNAME($this->CACertificate);
-			}
-			else {
+			} else {
 				// If not we need to assume the SSL cannot be verified so we set this flag to FALSE to allow the connection
-				$options[CURLOPT_SSL_VERIFYPEER] = FALSE;
+				$options[CURLOPT_SSL_VERIFYPEER] = false;
 			}
 		}
-
 		curl_setopt_array($curl, $options);
-
 		// Execute the request and decode to an array
 		$this->raw_response = curl_exec($curl);
-		$this->response     = json_decode($this->raw_response, TRUE);
-
+		$this->response     = json_decode($this->raw_response, true);
 		// If the status is not 200, something is wrong
 		$this->status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
 		// If there was no error, this will be an empty string
 		$curl_error = curl_error($curl);
-
 		curl_close($curl);
-
 		if (!empty($curl_error)) {
 			$this->error = $curl_error;
 		}
-
 		if ($this->response['error']) {
 			// If aitherd returned an error, put that in $this->error
 			$this->error = $this->response['error']['message'];
-		}
-		elseif ($this->status != 200) {
+		} elseif ($this->status != 200) {
 			// If aitherd didn't return a nice error message, we need to make our own
 			switch ($this->status) {
 				case 400:
@@ -197,11 +197,9 @@ class Aitherp {
 					break;
 			}
 		}
-
 		if ($this->error) {
-			return FALSE;
+			return false;
 		}
-
 		return $this->response['result'];
 	}
 }
