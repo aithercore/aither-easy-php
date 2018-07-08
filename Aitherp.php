@@ -71,7 +71,7 @@ namespace aither;
  * @see https://github.com/aithercore/aither-easy-php/blob/master/DOC.md
  * @method array getinfo() Returns an object containing various state info.
  * @method string help(string $command = "") Return all commands
- * @method string sendtoaddress(string $address, double $amount, string $comment = "", string $comment_to = "", bool $subtractfeefromamount = false) Send an amount to a given address
+ * @method string sendtoaddress(string $address, double $amount, string $comment = "", string $comment_to = "", bool $subtract_fee_from_amount = false) Send an amount to a given address
  */
 class Aitherp {
 
@@ -138,23 +138,23 @@ class Aitherp {
 		// The ID should be unique for each call
 		$this->id ++;
 		// Build the request, it's ok that params might have any empty array
-		$request = json_encode(array(
+		$request = json_encode([
 			'method' => $method,
 			'params' => $params,
 			'id'     => $this->id,
-		));
+		]);
 		// Build the cURL session
 		$curl    = curl_init("{$this->proto}://{$this->username}:{$this->password}@{$this->host}:{$this->port}/{$this->url}");
-		$options = array(
+		$options = [
 			CURLOPT_CONNECTTIMEOUT => 30,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_FOLLOWLOCATION => true,
 			CURLOPT_MAXREDIRS      => 10,
-			CURLOPT_HTTPHEADER     => array('Content-type: application/json'),
+			CURLOPT_HTTPHEADER     => ['Content-type: application/json'],
 			CURLOPT_POST           => true,
 			CURLOPT_POSTFIELDS     => $request,
 			CURLOPT_TIMEOUT        => 60,
-		);
+		];
 		if ($this->proto == 'https') {
 			// If the CA Certificate was specified we change CURL to look for it
 			if ($this->CACertificate != null) {
@@ -180,7 +180,7 @@ class Aitherp {
 		if ($this->response['error']) {
 			// If aitherd returned an error, put that in $this->error
 			$this->error = $this->response['error']['message'];
-		} elseif ($this->status != 200) {
+		} else if ($this->status != 200) {
 			// If aitherd didn't return a nice error message, we need to make our own
 			switch ($this->status) {
 				case 400:
@@ -201,5 +201,41 @@ class Aitherp {
 			return false;
 		}
 		return $this->response['result'];
+	}
+
+	/**
+	 * ﻿Get detailed information about in-wallet transaction <txid>
+	 *
+	 * @param string $txid
+	 * @param bool   $include_watch_only
+	 *
+	 * @return bool
+	 */
+	public function gettransaction($txid, $include_watch_only = false) {
+		$result = $this->__call('gettransaction', [
+			$txid,
+			$include_watch_only,
+		]);
+		if (isset($result['fee'])) {
+			if ($result['amount'] == 0) {
+				//send or receive to yourselve
+				foreach ($result['details'] as $detail) {
+					if ($detail['category'] == 'send') {
+						$result['amount_send'] = abs($detail['amount'] + $detail['fee']);
+					} else {
+						$result['amount_receive'] = abs($detail['amount'] + $detail['fee']);
+					}
+				}
+			} else {
+				//send to external address
+				$result['amount_send']    = abs($result['amount'] + $result['fee']);
+				$result['amount_receive'] = 0;
+			}
+		} else {
+			//receive from external address
+			$result['amount_send']    = 0;
+			$result['amount_receive'] = $result['amount'];
+		}
+		return $result;
 	}
 }
