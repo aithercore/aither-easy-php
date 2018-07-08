@@ -223,7 +223,7 @@ class Aitherp {
 					if ($detail['category'] == 'send') {
 						$result['amount_send'] = abs($detail['amount'] + $detail['fee']);
 					} else {
-						$result['amount_receive'] = abs($detail['amount'] + $detail['fee']);
+						$result['amount_receive'] = abs($detail['amount']);
 					}
 				}
 			} else {
@@ -234,7 +234,7 @@ class Aitherp {
 		} else {
 			//receive from external address
 			$result['amount_send']    = 0;
-			$result['amount_receive'] = $result['amount'];
+			$result['amount_receive'] = abs($result['amount']);
 		}
 		return $result;
 	}
